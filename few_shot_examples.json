@@ -1,0 +1,101 @@
+[
+  {
+    "description": "SYNTHETIC EXAMPLE - not a real paper or result (Successful Analysis)",
+    "input": "SYNTHETIC EXAMPLE - not a real paper or result: Paper URL https://synthetic-open-archive.org/abs/2499.01234 - 'Adaptive Tensor Sparsification for Resource-Constrained Graph Neural Networks'",
+    "output": {
+      "status": "ok",
+      "source_url": "https://synthetic-open-archive.org/abs/2499.01234",
+      "error": null,
+      "paper_title": "Adaptive Tensor Sparsification for Resource-Constrained Graph Neural Networks",
+      "core_summary": {
+        "problem_statement": "Graph Neural Networks (GNNs) suffer from severe memory bottlenecks when scaling to massive web-scale graphs, primarily due to dense neighborhood aggregation tensors that quickly overwhelm edge GPU and accelerator memory during forward propagation.",
+        "methodology": "The authors introduce Adaptive Tensor Sparsification (ATS), which computes dynamic feature saliency thresholds per graph node, pruning low-magnitude aggregation messages prior to inter-layer matrix multiplication.",
+        "algorithmic_contributions": "A threshold-based pruning kernel with linear time complexity O(|E|), coupled with an error-compensating backward gradient estimator that restores dropped activations during the backward pass.",
+        "key_findings": "The method reduces intermediate memory footprints by up to 60% across benchmark social graphs while preserving within 1% of baseline link-prediction accuracy without requiring architecture retraining.",
+        "plain_language_explanation": "Rather than calculating updates from every single neighboring node, ATS selectively listens only to the most informative neighbors, dramatically saving computer memory while getting almost identical prediction results."
+      },
+      "flowchart_mermaid": "graph TD\n    InGraph[\"Input Graph & Node Features\"]\n    SaliencyCalc[\"Dynamic Saliency Scorer\"]\n    ThresholdFilter[\"Adaptive Threshold Pruner\"]\n    SparseAgg[\"Sparse Neighborhood Aggregation\"]\n    LinLayer[\"Linear Projection Layer (inferred)\"]\n    ActFn[\"ReLU Activation\"]\n    OutEmb[\"Output Node Embeddings\"]\n    InGraph --> SaliencyCalc\n    InGraph --> ThresholdFilter\n    SaliencyCalc --> ThresholdFilter\n    ThresholdFilter --> SparseAgg\n    SparseAgg --> LinLayer\n    LinLayer --> ActFn\n    ActFn --> OutEmb",
+      "flowchart_inferred_elements": [
+        "Linear Projection Layer (inferred)"
+      ],
+      "project_extensions": [
+        {
+          "title": "Quantized Integer Aggregation on Edge Microcontrollers",
+          "proposed_modification": "Combine ATS dynamic pruning with 8-bit integer (INT8) quantization in the neighborhood aggregation operator.",
+          "problem_addressed": "Edge embedded hardware lacks floating-point tensor units, creating latency bottlenecks even with pruned message sizes.",
+          "expected_benefit": "Expected reduction in peak SRAM consumption and expected throughput gains on microcontroller architectures without structural model retraining.",
+          "success_metric": "Maintain under 35ms inference latency per 500-node subgraph on ARM Cortex-M55 emulator with <2% drop in F1 score.",
+          "tech_stack": ["PyTorch Geometric", "TensorFlow Lite Micro", "ONNX Runtime", "C++"],
+          "implementation_plan": [
+            "Export ATS sparse matrices into standard Compressed Sparse Row (CSR) INT8 format.",
+            "Write custom INT8 fixed-point aggregation kernel for ARM CMSIS-NN.",
+            "Profile execution cycles and cache misses across synthetic citation network datasets."
+          ],
+          "evaluation_plan": "Measure inference latency, memory high-water mark, and macro-F1 score on standard benchmark graph datasets."
+        },
+        {
+          "title": "Temporal Graph Saliency Cache for Dynamic Streaming Networks",
+          "proposed_modification": "Implement an LRU saliency score cache that reuses computed neighborhood importance weights across consecutive temporal timesteps.",
+          "problem_addressed": "Recomputing saliency thresholds from scratch at every incoming graph update wastes computational cycles on stable connections.",
+          "expected_benefit": "Expected reduction in redundant threshold computations on dynamic streaming networks with moderate node churn.",
+          "success_metric": "Targeting a 30-40% reduction in total FLOPs per graph snapshot with exact parity in classification outputs.",
+          "tech_stack": ["DGL", "PyTorch", "Redis", "NumPy"],
+          "implementation_plan": [
+            "Design timestamp-aware eviction policy for node saliency vectors.",
+            "Implement sliding-window invalidation mechanism for high-activity nodes.",
+            "Benchmark against vanilla continuous re-evaluation across evolving graph streams."
+          ],
+          "evaluation_plan": "Compare end-to-end wall-clock throughput and cache hit rate against un-cached baseline on dynamic datasets."
+        },
+        {
+          "title": "Hardware-Aware Sparsification for Mobile WebGL Visualizers",
+          "proposed_modification": "Port the ATS pruning logic to client-side WebAssembly and WebGPU shaders for real-time interactive browser graph exploration.",
+          "problem_addressed": "Client-side browser graph visualization drops below 30 FPS when rendering dense subgraphs exceeding 10,000 vertices.",
+          "expected_benefit": "Expected improvement in browser render frame rates and responsiveness during real-time user panning and exploration.",
+          "success_metric": "Achieve consistent 60 FPS rendering on mid-tier mobile browsers for graphs with up to 25,000 nodes.",
+          "tech_stack": ["WebGPU", "WGSL", "TypeScript", "Three.js"],
+          "implementation_plan": [
+            "Translate PyTorch sparse aggregation routines into WebGPU compute shaders.",
+            "Integrate dynamic node filtering with client-side particle rendering.",
+            "Conduct automated frame-rate profiling across desktop and mobile devices."
+          ],
+          "evaluation_plan": "Record average frames per second (FPS) and memory heap consumption during continuous canvas pan/zoom interactions."
+        }
+      ],
+      "metadata": {
+        "citations": null,
+        "authors": "Dr. Alex Vance, Dr. Elena Rostova",
+        "publication": "Synthetic Conference on Machine Learning (SCML 2024)",
+        "year": 2024,
+        "verification_notes": "SYNTHETIC EXAMPLE: Citations set to null as metrics fluctuate and paper is synthetic. Metadata verified against fictional SCML 2024 proceedings."
+      },
+      "inference_notes": [
+        "Synthetic paper example processed successfully.",
+        "Combined core_summary word count is approximately 140 words, comfortably within the 300-word limit.",
+        "Linear layer in Mermaid marked as inferred based on standard message-passing neural network layers."
+      ]
+    }
+  },
+  {
+    "description": "SYNTHETIC EXAMPLE - not a real paper or result (Unavailable / Paywalled Paper)",
+    "input": "SYNTHETIC EXAMPLE - not a real paper or result: Paper URL https://restricted-closed-paywall.org/article/98765 - 'Proprietary Quantum State Simulation via Monolithic Silicon'",
+    "output": {
+      "status": "unavailable",
+      "source_url": "https://restricted-closed-paywall.org/article/98765",
+      "error": {
+        "code": "UNAVAILABLE",
+        "message": "The paper at this URL is restricted behind a subscriber paywall or enterprise login system. No public abstract or open-access preprint was accessible. Suggestions: Please provide an open-access arXiv URL (e.g. https://arxiv.org/abs/...) or a link to an open PDF repository."
+      },
+      "paper_title": "Proprietary Quantum State Simulation via Monolithic Silicon",
+      "core_summary": null,
+      "flowchart_mermaid": null,
+      "flowchart_inferred_elements": [],
+      "project_extensions": [],
+      "metadata": null,
+      "inference_notes": [
+        "SYNTHETIC EXAMPLE: Document is paywalled and full text/abstract cannot be inspected.",
+        "In accordance with safety and grounding guidelines, no architectural diagram, summary, or project extensions are fabricated."
+      ]
+    }
+  }
+]

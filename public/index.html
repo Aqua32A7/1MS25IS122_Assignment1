@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScholarFlow | CS Research Agent & Architecture Analyzer</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            paper: '#F7F6F1',
+            ink: '#211F1B',
+            muted: '#726C62',
+            hairline: '#E2DED3',
+            accent: '#233A5E',
+            accent2: '#4B6E5A'
+          },
+          fontFamily: {
+            serif: ['"Source Serif 4"', 'Georgia', 'serif'],
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            mono: ['"IBM Plex Mono"', 'ui-monospace', 'Menlo', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Pinned Lucide version -->
+  <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    ::-webkit-scrollbar { width: 9px; height: 9px; }
+    ::-webkit-scrollbar-track { background: #F7F6F1; }
+    ::-webkit-scrollbar-thumb { background: #D6D1C4; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #C2BCAC; }
+    .mermaid svg { max-width: 100% !important; height: auto !important; margin: 0 auto; }
+    .rule { border-color: #E2DED3; }
+    ::selection { background: #233A5E; color: #F7F6F1; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 2px solid #233A5E;
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+
+<body class="bg-paper text-ink min-h-screen flex flex-col font-sans">
+
+  <!-- MASTHEAD -->
+  <header class="border-b border-hairline bg-paper/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-6 h-20 flex items-center justify-between">
+      <div class="flex items-baseline gap-3">
+        <span class="font-serif text-2xl font-semibold tracking-tight">ScholarFlow</span>
+        <span class="hidden sm:inline text-xs text-muted font-mono">CS research agent</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btnEngine" class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-ink border border-hairline rounded hover:border-ink transition focus:ring-2 focus:ring-accent">
+          <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+          <span>Engine</span>
+        </button>
+        <button id="btnDownloadJson" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-hairline text-ink rounded hover:border-ink transition focus:ring-2 focus:ring-accent">
+          <i data-lucide="file-json" class="w-3.5 h-3.5"></i>
+          <span>Download JSON</span>
+        </button>
+        <button id="btnDownloadTxt" class="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium bg-accent hover:bg-[#1B2E49] text-paper rounded transition focus:ring-2 focus:ring-accent">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+          <span>Download TXT</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-5xl w-full mx-auto px-6 py-12 space-y-10">
+
+    <!-- INTRO -->
+    <div class="max-w-2xl space-y-3">
+      <p class="text-xs font-mono text-accent">Paper → architecture → student project</p>
+      <h1 class="font-serif text-4xl sm:text-5xl font-semibold tracking-tight leading-[1.1]">
+        Read the paper once. Get the diagram and the next project with it.
+      </h1>
+      <p class="text-muted leading-relaxed">
+        Give ScholarFlow a title, a link, or an abstract. It extracts the core idea in plain language, draws the system as a flowchart, and proposes three ways a 3rd-year student could extend it for a portfolio.
+      </p>
+    </div>
+
+    <!-- PRIMARY LIVE ACTION -->
+    <div class="flex flex-wrap items-center justify-between gap-3 p-4 bg-white border border-accent/30 rounded-lg">
+      <div class="space-y-0.5">
+        <div class="text-xs font-medium text-accent uppercase tracking-wider font-mono">Live Research Agent</div>
+        <p class="text-xs text-muted">Test with canonical arXiv paper: Vaswani et al. (Attention Is All You Need)</p>
+      </div>
+      <button id="btnTrySampleLive" class="px-3.5 py-1.5 bg-accent hover:bg-[#1B2E49] text-paper text-xs font-medium rounded flex items-center gap-1.5 transition">
+        <i data-lucide="play" class="w-3.5 h-3.5"></i>
+        <span>Try sample paper (live)</span>
+      </button>
+    </div>
+
+    <!-- INPUT CARD -->
+    <div class="border border-hairline rounded-lg bg-white p-6 space-y-5">
+      <div class="flex items-center justify-between border-b border-hairline pb-3">
+        <div class="flex gap-1">
+          <button id="tabUrl" class="px-3 py-1.5 text-xs font-medium rounded bg-ink text-paper transition">
+            Title or URL
+          </button>
+          <button id="tabRaw" class="px-3 py-1.5 text-xs font-medium rounded text-muted hover:text-ink transition">
+            Abstract
+          </button>
+        </div>
+        <span class="hidden sm:inline text-xs text-muted font-mono">summary capped at 300 words</span>
+      </div>
+
+      <!-- URL or Title input -->
+      <div id="urlInputContainer" class="space-y-2">
+        <label for="paperInput" class="block text-xs font-medium text-ink">
+          Paper arXiv URL or Research Title
+        </label>
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3.5 text-muted pointer-events-none"></i>
+          <input
+            type="text"
+            id="paperInput"
+            placeholder="e.g. https://arxiv.org/abs/1706.03762 or Attention Is All You Need"
+            value="https://arxiv.org/abs/1706.03762"
+            class="w-full bg-paper border border-hairline rounded pl-10 pr-28 py-3 text-sm text-ink placeholder-muted/70 focus:outline-none focus:border-accent transition"
+          />
+          <button
+            id="analyzeUrlBtn"
+            class="absolute right-1.5 top-1.5 px-4 py-1.5 bg-accent hover:bg-[#1B2E49] text-paper rounded text-xs font-medium flex items-center gap-1.5 transition disabled:opacity-50 disabled:cursor-not-allowed">
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            <span>Analyze</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Raw text / abstract input -->
+      <div id="rawInputContainer" class="space-y-2 hidden">
+        <label for="rawText" class="block text-xs font-medium text-ink">
+          Paste Abstract or Methodology Text
+        </label>
+        <textarea
+          id="rawText"
+          rows="4"
+          placeholder="Paste the abstract or description of the method here…"
+          class="w-full bg-paper border border-hairline rounded p-3.5 text-sm text-ink placeholder-muted/70 focus:outline-none focus:border-accent transition"
+        ></textarea>
+        <div class="flex justify-end">
+          <button
+            id="analyzeRawBtn"
+            class="px-4 py-2 bg-accent hover:bg-[#1B2E49] text-paper rounded text-xs font-medium flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed">
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            <span>Analyze abstract</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Client-side validation message -->
+      <div id="validationError" class="hidden text-xs text-red-600 bg-red-50 border border-red-200 rounded p-2.5"></div>
+
+      <!-- Bundled benchmark options -->
+      <div class="pt-2">
+        <span class="text-xs text-muted block mb-2 font-mono">Illustrative samples (bundled, not a live analysis)</span>
+        <div class="flex flex-wrap gap-2">
+          <button data-benchmark="transformer" class="btn-benchmark px-3 py-1.5 rounded text-xs bg-paper border border-hairline hover:border-accent text-ink transition">
+            Attention Is All You Need <span class="text-muted font-mono">1706.03762</span>
+          </button>
+          <button data-benchmark="resnet" class="btn-benchmark px-3 py-1.5 rounded text-xs bg-paper border border-hairline hover:border-accent text-ink transition">
+            Deep Residual Learning <span class="text-muted font-mono">CVPR 2016</span>
+          </button>
+          <button data-benchmark="lora" class="btn-benchmark px-3 py-1.5 rounded text-xs bg-paper border border-hairline hover:border-accent text-ink transition">
+            LoRA <span class="text-muted font-mono">2106.09685</span>
+          </button>
+          <button data-benchmark="mamba" class="btn-benchmark px-3 py-1.5 rounded text-xs bg-paper border border-hairline hover:border-accent text-ink transition">
+            Mamba <span class="text-muted font-mono">2312.00752</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATUS & FEEDBACK AREA -->
+    <div id="statusContainer" aria-live="polite" class="space-y-4">
+      <!-- Loading indicator -->
+      <div id="loadingBox" class="hidden border border-accent/20 bg-accent/5 rounded-lg p-5 flex items-center gap-3.5">
+        <div class="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+        <div>
+          <div class="text-xs font-semibold text-accent" id="loadingTitle">Analyzing paper...</div>
+          <div class="text-xs text-muted" id="loadingDetail">Contacting Gemini research engine and grounding sources.</div>
+        </div>
+      </div>
+
+      <!-- Sample Banner -->
+      <div id="sampleBanner" class="hidden bg-amber-50 border border-amber-200 text-amber-900 px-4 py-2.5 rounded text-xs flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="info" class="w-4 h-4 text-amber-700 flex-shrink-0"></i>
+          <span><strong>SAMPLE</strong> — illustrative, not a live result</span>
+        </div>
+        <button id="dismissSampleBanner" class="text-amber-700 hover:text-amber-900"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+      </div>
+
+      <!-- Warning Banner (Partial Abstract Analysis) -->
+      <div id="warningBanner" class="hidden bg-orange-50 border border-orange-200 text-orange-900 px-4 py-3 rounded text-xs space-y-1">
+        <div class="flex items-center gap-2 font-medium">
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-orange-600 flex-shrink-0"></i>
+          <span>Partial Analysis (Abstract Only)</span>
+        </div>
+        <p class="text-orange-800 text-[11px]" id="warningBannerText">
+          Only the abstract or partial summary was available. Architecture and project extensions are generated solely from available abstract information.
+        </p>
+      </div>
+
+      <!-- Error / Unavailable Banner -->
+      <div id="errorBanner" class="hidden bg-rose-50 border border-rose-200 text-rose-900 px-5 py-4 rounded-lg space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 font-medium">
+            <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 flex-shrink-0"></i>
+            <span id="errorBannerTitle">Paper Unavailable</span>
+          </div>
+          <button id="btnRetry" class="hidden px-3 py-1 text-xs bg-rose-600 hover:bg-rose-700 text-white rounded font-medium transition">
+            Retry
+          </button>
+        </div>
+        <p class="text-xs text-rose-800" id="errorBannerText"></p>
+        <div id="errorSuggestions" class="text-xs text-rose-700 pt-1 border-t border-rose-200 space-y-1">
+          <div class="font-medium text-[11px]">Suggestions:</div>
+          <ul class="list-disc list-inside text-[11px] space-y-0.5">
+            <li>Ensure the link is an open-access paper (e.g. arXiv abstract page like <code class="font-mono">https://arxiv.org/abs/...</code>).</li>
+            <li>If the publisher site requires a subscription or login, switch to the <strong>Abstract</strong> tab and paste the text directly.</li>
+            <li>Try searching by the full official title of the paper.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS SECTION -->
+    <div id="resultsContainer" class="space-y-14">
+
+      <!-- Paper meta header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-hairline pb-5">
+        <div>
+          <div class="flex items-center gap-2 mb-1.5 text-xs text-muted">
+            <span id="paperYear">2017</span>
+            <span>·</span>
+            <span id="paperStatusBadge" class="font-mono px-2 py-0.5 rounded text-[10px] bg-paper border border-hairline text-accent">ok</span>
+          </div>
+          <h2 class="font-serif text-2xl sm:text-3xl font-semibold tracking-tight" id="paperTitle">
+            Attention Is All You Need
+          </h2>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btnCopyAnalysis" class="px-3 py-1.5 text-xs text-ink border border-hairline rounded hover:border-ink flex items-center gap-1.5 transition">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copy analysis</span>
+          </button>
+          <a id="paperArxivLink" href="https://arxiv.org/abs/1706.03762" target="_blank" class="px-3 py-1.5 text-xs text-accent border border-hairline rounded hover:border-accent flex items-center gap-1.5 transition">
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i><span>View paper source</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- SECTION 1: CORE CONCEPT (ALL 5 FIELDS) -->
+      <section class="space-y-5">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-baseline gap-3">
+            <span class="font-serif text-sm text-accent">01</span>
+            <h3 class="font-serif text-xl font-semibold">Core concept</h3>
+          </div>
+          <span class="text-xs font-mono text-accent2 px-2 py-0.5 rounded border border-hairline bg-paper" id="wordCountBadge">195 words</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div class="border border-hairline rounded-lg bg-white p-5 space-y-2">
+            <div class="text-xs font-medium text-muted">Problem statement</div>
+            <p class="text-sm text-ink leading-relaxed" id="conceptProblem"></p>
+          </div>
+          <div class="border border-hairline rounded-lg bg-white p-5 space-y-2">
+            <div class="text-xs font-medium text-muted">Primary methodology</div>
+            <p class="text-sm text-ink leading-relaxed" id="conceptMethodology"></p>
+          </div>
+          <div class="border border-hairline rounded-lg bg-white p-5 space-y-2">
+            <div class="text-xs font-medium text-muted">Algorithmic contributions</div>
+            <p class="text-sm text-ink leading-relaxed" id="conceptAlgorithmic"></p>
+          </div>
+          <div class="border border-hairline rounded-lg bg-white p-5 space-y-2">
+            <div class="text-xs font-medium text-muted">Key findings</div>
+            <p class="text-sm text-ink leading-relaxed" id="conceptFindings"></p>
+          </div>
+          <div class="border border-hairline rounded-lg bg-white p-5 space-y-2 md:col-span-2">
+            <div class="text-xs font-medium text-muted">Plain-language explanation</div>
+            <p class="text-sm text-ink leading-relaxed" id="conceptPlain"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: SYSTEM ARCHITECTURE [FLOWCHART] -->
+      <section class="space-y-5">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-baseline gap-3">
+            <span class="font-serif text-sm text-accent">02</span>
+            <div>
+              <h3 class="font-serif text-xl font-semibold">System architecture</h3>
+              <span class="text-xs text-muted font-mono">[FLOWCHART] — Mermaid.js (strict mode)</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btnToggleMermaidSource" class="px-2.5 py-1 text-xs border border-hairline rounded hover:border-ink flex items-center gap-1.5 transition">
+              <i data-lucide="code" class="w-3.5 h-3.5"></i><span>Source</span>
+            </button>
+            <button id="btnCopyMermaid" class="px-2.5 py-1 text-xs border border-hairline rounded hover:border-ink flex items-center gap-1.5 transition">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copy</span>
+            </button>
+            <button id="btnDownloadSvg" class="px-2.5 py-1 text-xs border border-hairline rounded hover:border-ink flex items-center gap-1.5 transition">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i><span>SVG</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="border border-hairline rounded-lg bg-white p-6 relative overflow-hidden">
+          <div class="absolute right-4 top-4 z-10 flex items-center gap-0.5 bg-white border border-hairline rounded p-0.5">
+            <button id="btnZoomIn" title="Zoom in" class="p-1.5 hover:bg-paper text-muted rounded"><i data-lucide="zoom-in" class="w-4 h-4"></i></button>
+            <button id="btnZoomOut" title="Zoom out" class="p-1.5 hover:bg-paper text-muted rounded"><i data-lucide="zoom-out" class="w-4 h-4"></i></button>
+            <button id="btnResetZoom" title="Reset" class="p-1.5 hover:bg-paper text-muted rounded"><i data-lucide="maximize" class="w-4 h-4"></i></button>
+          </div>
+          <div id="mermaidViewport" class="w-full overflow-x-auto min-h-[360px] flex items-center justify-center py-4 transition-transform duration-200">
+            <div id="mermaidDiagram" class="mermaid w-full flex justify-center"></div>
+          </div>
+          <div id="mermaidCodeBlock" class="hidden mt-4 pt-4 border-t border-hairline">
+            <pre class="bg-paper p-4 rounded text-xs font-mono text-accent2 overflow-x-auto border border-hairline"><code id="mermaidRawText"></code></pre>
+          </div>
+          <!-- Inferred Elements Footer -->
+          <div id="inferredContainer" class="mt-4 pt-3 border-t border-hairline text-xs text-muted flex items-start gap-2">
+            <span class="font-medium text-ink flex-shrink-0">Inferred elements:</span>
+            <span id="inferredList" class="font-mono text-muted">None</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: BUILD OPPORTUNITIES -->
+      <section class="space-y-5">
+        <div class="flex items-baseline gap-3">
+          <span class="font-serif text-sm text-accent">03</span>
+          <div>
+            <h3 class="font-serif text-xl font-semibold">Build opportunities</h3>
+            <span class="text-xs text-muted">Three realistic portfolio project extensions for a 3rd-year CS student</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5" id="projectsContainer"></div>
+      </section>
+
+      <!-- SECTION 4: METADATA OF PAPER (LAST SECTION) -->
+      <section class="space-y-5 border-t border-hairline pt-8">
+        <div class="flex items-baseline gap-3">
+          <span class="font-serif text-sm text-accent">04</span>
+          <h3 class="font-serif text-xl font-semibold">Metadata of Paper</h3>
+        </div>
+
+        <div class="border border-hairline rounded-lg bg-white p-6 space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pb-4 border-b border-hairline">
+            <div>
+              <div class="text-xs font-medium text-muted">Citations</div>
+              <div class="text-sm font-serif font-medium text-ink mt-0.5" id="metaCitations">Not verified</div>
+            </div>
+            <div>
+              <div class="text-xs font-medium text-muted">Publication / Venue</div>
+              <div class="text-sm font-medium text-ink mt-0.5" id="metaPublication">Not verified</div>
+            </div>
+            <div>
+              <div class="text-xs font-medium text-muted">Publication Year</div>
+              <div class="text-sm font-medium text-ink mt-0.5" id="metaYear">Not verified</div>
+            </div>
+            <div>
+              <div class="text-xs font-medium text-muted">Status</div>
+              <div class="text-sm font-medium text-ink mt-0.5" id="metaStatus">Verified</div>
+            </div>
+          </div>
+          <div>
+            <div class="text-xs font-medium text-muted mb-1">Authors</div>
+            <div class="text-xs text-ink leading-relaxed font-serif" id="metaAuthors">Not verified</div>
+          </div>
+          <div>
+            <div class="text-xs font-medium text-muted mb-1">Verification notes</div>
+            <p class="text-xs text-muted leading-relaxed font-mono bg-paper p-3 rounded border border-hairline" id="metaVerificationNotes">
+              Grounded metadata extracted directly from paper source.
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ENGINE SETTINGS MODAL -->
+  <div id="settingsModal" class="fixed inset-0 bg-ink/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white border border-hairline rounded-lg max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-serif font-semibold text-lg">Engine configuration</h3>
+        <button id="btnCloseSettings" class="text-muted hover:text-ink"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="space-y-3 text-xs text-muted leading-relaxed">
+        <p>
+          <strong class="text-ink">Backend Inference Engine:</strong> Powered by Google Gemini 2.5 Flash with Google Search grounding enabled.
+        </p>
+        <p>
+          <strong class="text-ink">API Key Security:</strong> The Gemini API key is configured strictly on the Node.js backend using <code class="font-mono">process.env.GEMINI_API_KEY</code>. No API key is ever exposed to or stored in the browser.
+        </p>
+        <p>
+          <strong class="text-ink">Benchmark Samples:</strong> The 4 benchmark buttons load bundled illustrative samples for offline demonstration without invoking live model inference.
+        </p>
+      </div>
+      <div class="pt-3 border-t border-hairline flex justify-end">
+        <button id="btnDismissSettings" class="px-4 py-1.5 text-xs bg-accent hover:bg-[#1B2E49] text-paper font-medium rounded">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="fixed bottom-6 right-6 bg-ink text-paper px-4 py-2.5 rounded text-xs font-medium shadow-lg flex items-center gap-2 transform translate-y-20 opacity-0 transition duration-300 z-50">
+    <i data-lucide="check" class="w-4 h-4"></i>
+    <span id="toastMsg">Action completed</span>
+  </div>
+
+  <footer class="border-t border-hairline py-6 mt-8 text-center text-xs text-muted">
+    ScholarFlow — Computer Science Research Paper Agent & Architecture Analyzer
+  </footer>
+
+  <script>
+    // Initialize icons
+    lucide.createIcons();
+
+    // Initialize Mermaid strictly
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'strict',
+      theme: 'base',
+      themeVariables: {
+        background: '#FFFFFF',
+        primaryColor: '#F7F6F1',
+        primaryTextColor: '#211F1B',
+        primaryBorderColor: '#233A5E',
+        lineColor: '#233A5E',
+        secondaryColor: '#EFEDE5',
+        tertiaryColor: '#EFEDE5',
+        fontFamily: 'IBM Plex Mono, monospace'
+      },
+      flowchart: { useMaxWidth: true, htmlLabels: false, curve: 'basis' }
+    });
+
+    let currentAnalysisData = null;
+    let currentZoom = 1;
+    let lastQueryPayload = null;
+
+    // Load bundled transformer sample on startup
+    window.addEventListener('DOMContentLoaded', async () => {
+      setupEventListeners();
+      await loadBundledSample('transformer');
+    });
+
+    function setupEventListeners() {
+      // Tab switching
+      document.getElementById('tabUrl').addEventListener('click', () => switchInputMode('url'));
+      document.getElementById('tabRaw').addEventListener('click', () => switchInputMode('raw'));
+
+      // Analysis triggers
+      document.getElementById('analyzeUrlBtn').addEventListener('click', () => triggerAnalysis('url'));
+      document.getElementById('analyzeRawBtn').addEventListener('click', () => triggerAnalysis('raw'));
+      document.getElementById('paperInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') triggerAnalysis('url');
+      });
+
+      // Primary live sample action
+      document.getElementById('btnTrySampleLive').addEventListener('click', () => {
+        switchInputMode('url');
+        document.getElementById('paperInput').value = 'https://arxiv.org/abs/1706.03762';
+        triggerAnalysis('url');
+      });
+
+      // Benchmark buttons
+      document.querySelectorAll('.btn-benchmark').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.getAttribute('data-benchmark');
+          loadBundledSample(key);
+        });
+      });
+
+      // Export & copy buttons
+      document.getElementById('btnCopyAnalysis').addEventListener('click', copyAnalysisPlainText);
+      document.getElementById('btnDownloadJson').addEventListener('click', downloadJsonReport);
+      document.getElementById('btnDownloadTxt').addEventListener('click', downloadTxtReport);
+
+      // Mermaid controls
+      document.getElementById('btnToggleMermaidSource').addEventListener('click', toggleMermaidSource);
+      document.getElementById('btnCopyMermaid').addEventListener('click', copyMermaidString);
+      document.getElementById('btnDownloadSvg').addEventListener('click', downloadSvg);
+      document.getElementById('btnZoomIn').addEventListener('click', () => zoomMermaid(1.15));
+      document.getElementById('btnZoomOut').addEventListener('click', () => zoomMermaid(0.85));
+      document.getElementById('btnResetZoom').addEventListener('click', resetZoom);
+
+      // Modal & banner controls
+      document.getElementById('btnEngine').addEventListener('click', toggleSettingsModal);
+      document.getElementById('btnCloseSettings').addEventListener('click', toggleSettingsModal);
+      document.getElementById('btnDismissSettings').addEventListener('click', toggleSettingsModal);
+      document.getElementById('dismissSampleBanner').addEventListener('click', () => {
+        document.getElementById('sampleBanner').classList.add('hidden');
+      });
+
+      // Retry button
+      document.getElementById('btnRetry').addEventListener('click', () => {
+        if (lastQueryPayload) {
+          executeAnalysisRequest(lastQueryPayload.inputType, lastQueryPayload.content);
+        }
+      });
+    }
+
+    function switchInputMode(mode) {
+      clearValidationError();
+      const urlBox = document.getElementById('urlInputContainer');
+      const rawBox = document.getElementById('rawInputContainer');
+      const tabUrl = document.getElementById('tabUrl');
+      const tabRaw = document.getElementById('tabRaw');
+      if (mode === 'url') {
+        urlBox.classList.remove('hidden');
+        rawBox.classList.add('hidden');
+        tabUrl.className = "px-3 py-1.5 text-xs font-medium rounded bg-ink text-paper transition";
+        tabRaw.className = "px-3 py-1.5 text-xs font-medium rounded text-muted hover:text-ink transition";
+      } else {
+        urlBox.classList.add('hidden');
+        rawBox.classList.remove('hidden');
+        tabRaw.className = "px-3 py-1.5 text-xs font-medium rounded bg-ink text-paper transition";
+        tabUrl.className = "px-3 py-1.5 text-xs font-medium rounded text-muted hover:text-ink transition";
+      }
+    }
+
+    function toggleSettingsModal() {
+      document.getElementById('settingsModal').classList.toggle('hidden');
+    }
+
+    function showValidationError(msg) {
+      const el = document.getElementById('validationError');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function clearValidationError() {
+      const el = document.getElementById('validationError');
+      el.textContent = '';
+      el.classList.add('hidden');
+    }
+
+    // Client-side input validation
+    function validateClientInput(inputType) {
+      clearValidationError();
+      if (inputType === 'url') {
+        const val = document.getElementById('paperInput').value.trim();
+        if (!val) {
+          showValidationError('Input cannot be empty. Please enter an arXiv URL or paper title.');
+          return null;
+        }
+
+        // Check if user is typing a URL or protocol scheme
+        const isUrlLike = /^([a-zA-Z0-9+.-]+:\/\/|[a-z0-9-]+\.[a-z]{2,})/i.test(val);
+        if (isUrlLike) {
+          if (!/^https?:\/\//i.test(val)) {
+            showValidationError('Invalid URL protocol. URLs must start with http:// or https://');
+            return null;
+          }
+          try {
+            new URL(val);
+          } catch {
+            showValidationError('Malformed URL. Please verify the URL structure.');
+            return null;
+          }
+        }
+        return val;
+      } else {
+        const val = document.getElementById('rawText').value.trim();
+        if (!val) {
+          showValidationError('Abstract text cannot be empty. Please paste the abstract.');
+          return null;
+        }
+        if (val.length < 30) {
+          showValidationError('Please provide a more substantial abstract or method description (at least 30 characters).');
+          return null;
+        }
+        return val;
+      }
+    }
+
+    function triggerAnalysis(inputType) {
+      const content = validateClientInput(inputType);
+      if (!content) return;
+      executeAnalysisRequest(inputType, content);
+    }
+
+    async function executeAnalysisRequest(inputType, content) {
+      lastQueryPayload = { inputType, content };
+
+      // Set UI to loading state
+      setLoadingState(true);
+      hideBanners();
+
+      try {
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ inputType, content })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          handleApiError(response.status, data?.error);
+          return;
+        }
+
+        if (data.status === 'unavailable') {
+          handleUnavailablePaper(data);
+          return;
+        }
+
+        // Handle partial status
+        if (data.status === 'partial') {
+          showWarningBanner(data?.error?.message || 'Only abstract or partial information was grounded.');
+        }
+
+        // Display results
+        await renderAnalysisResult(data, false);
+
+      } catch (err) {
+        handleApiError(500, {
+          code: 'NETWORK_ERROR',
+          message: 'Network error contacting backend: ' + err.message
+        });
+      } finally {
+        setLoadingState(false);
+      }
+    }
+
+    function setLoadingState(isLoading) {
+      const loadingBox = document.getElementById('loadingBox');
+      const btnUrl = document.getElementById('analyzeUrlBtn');
+      const btnRaw = document.getElementById('analyzeRawBtn');
+
+      if (isLoading) {
+        loadingBox.classList.remove('hidden');
+        btnUrl.disabled = true;
+        btnRaw.disabled = true;
+      } else {
+        loadingBox.classList.add('hidden');
+        btnUrl.disabled = false;
+        btnRaw.disabled = false;
+      }
+    }
+
+    function hideBanners() {
+      document.getElementById('sampleBanner').classList.add('hidden');
+      document.getElementById('warningBanner').classList.add('hidden');
+      document.getElementById('errorBanner').classList.add('hidden');
+      document.getElementById('btnRetry').classList.add('hidden');
+    }
+
+    function showWarningBanner(msg) {
+      const banner = document.getElementById('warningBanner');
+      const text = document.getElementById('warningBannerText');
+      text.textContent = msg;
+      banner.classList.remove('hidden');
+    }
+
+    function handleUnavailablePaper(data) {
+      document.getElementById('resultsContainer').classList.add('hidden');
+      const banner = document.getElementById('errorBanner');
+      document.getElementById('errorBannerTitle').textContent = 'Paper Content Unavailable';
+      document.getElementById('errorBannerText').textContent = data?.error?.message ||
+        'The specified paper cannot be accessed (e.g. locked behind a paywall, login wall, or unsupported format).';
+      document.getElementById('errorSuggestions').classList.remove('hidden');
+      banner.classList.remove('hidden');
+    }
+
+    function handleApiError(statusCode, errObj) {
+      document.getElementById('resultsContainer').classList.add('hidden');
+      const banner = document.getElementById('errorBanner');
+      document.getElementById('errorBannerTitle').textContent = `Analysis Failed (${statusCode || 500})`;
+      document.getElementById('errorBannerText').textContent = errObj?.message || 'An error occurred while processing the paper.';
+      document.getElementById('errorSuggestions').classList.add('hidden');
+      document.getElementById('btnRetry').classList.remove('hidden');
+      banner.classList.remove('hidden');
+    }
+
+    // Render analysis result in DOM using textContent / createElement strictly
+    async function renderAnalysisResult(data, isSample = false) {
+      currentAnalysisData = data;
+      document.getElementById('resultsContainer').classList.remove('hidden');
+      document.getElementById('errorBanner').classList.add('hidden');
+
+      if (isSample) {
+        document.getElementById('sampleBanner').classList.remove('hidden');
+      } else {
+        document.getElementById('sampleBanner').classList.add('hidden');
+      }
+
+      // Paper header
+      document.getElementById('paperTitle').textContent = data.paper_title || 'Untitled Research Paper';
+      document.getElementById('paperYear').textContent = data.metadata?.year || 'Year not verified';
+      document.getElementById('paperStatusBadge').textContent = data.status || 'ok';
+      if (data.source_url) {
+        const link = document.getElementById('paperArxivLink');
+        link.href = data.source_url;
+        link.classList.remove('hidden');
+      }
+
+      // Core Summary fields
+      const summary = data.core_summary || {};
+      document.getElementById('conceptProblem').textContent = summary.problem_statement || '';
+      document.getElementById('conceptMethodology').textContent = summary.methodology || '';
+      document.getElementById('conceptAlgorithmic').textContent = summary.algorithmic_contributions || '';
+      document.getElementById('conceptFindings').textContent = summary.key_findings || '';
+      document.getElementById('conceptPlain').textContent = summary.plain_language_explanation || '';
+
+      // Word count calculation
+      let count = calculateWordCount(summary);
+      updateWordCountBadge(count);
+
+      // If word count > 300 and not a bundled sample, call server once to shorten
+      if (count > 300 && !isSample) {
+        try {
+          const shortenRes = await fetch('/api/shorten', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ core_summary: summary })
+          });
+          if (shortenRes.ok) {
+            const shortenedData = await shortenRes.json();
+            if (shortenedData.core_summary) {
+              data.core_summary = shortenedData.core_summary;
+              document.getElementById('conceptProblem').textContent = data.core_summary.problem_statement || '';
+              document.getElementById('conceptMethodology').textContent = data.core_summary.methodology || '';
+              document.getElementById('conceptAlgorithmic').textContent = data.core_summary.algorithmic_contributions || '';
+              document.getElementById('conceptFindings').textContent = data.core_summary.key_findings || '';
+              document.getElementById('conceptPlain').textContent = data.core_summary.plain_language_explanation || '';
+              count = calculateWordCount(data.core_summary);
+              updateWordCountBadge(count);
+            }
+          }
+        } catch {
+          // Keep original and let badge reflect count
+        }
+      }
+
+      // Render Mermaid flowchart
+      await renderMermaidDiagram(data.flowchart_mermaid || '');
+      document.getElementById('mermaidRawText').textContent = data.flowchart_mermaid || '';
+
+      // Inferred elements
+      const inferredContainer = document.getElementById('inferredList');
+      const inferredArr = data.flowchart_inferred_elements || [];
+      if (inferredArr.length > 0) {
+        inferredContainer.textContent = inferredArr.join(', ');
+      } else {
+        inferredContainer.textContent = 'None';
+      }
+
+      // Render Project extensions (3 cards)
+      renderProjectCards(data.project_extensions || []);
+
+      // Metadata section
+      const meta = data.metadata || {};
+      document.getElementById('metaCitations').textContent = meta.citations !== null && meta.citations !== undefined ? meta.citations.toLocaleString() : 'Not verified';
+      document.getElementById('metaPublication').textContent = meta.publication || 'Not verified';
+      document.getElementById('metaYear').textContent = meta.year || 'Not verified';
+      document.getElementById('metaStatus').textContent = data.status === 'ok' ? 'Verified' : (data.status === 'partial' ? 'Partial' : 'Unavailable');
+      document.getElementById('metaAuthors').textContent = meta.authors || 'Not verified';
+      document.getElementById('metaVerificationNotes').textContent = meta.verification_notes || 'No verification notes provided.';
+
+      lucide.createIcons();
+    }
+
+    function calculateWordCount(summaryObj) {
+      const combined = [
+        summaryObj.problem_statement,
+        summaryObj.methodology,
+        summaryObj.algorithmic_contributions,
+        summaryObj.key_findings,
+        summaryObj.plain_language_explanation
+      ].filter(Boolean).join(' ').trim();
+      return combined ? combined.split(/\s+/).filter(Boolean).length : 0;
+    }
+
+    function updateWordCountBadge(count) {
+      const badge = document.getElementById('wordCountBadge');
+      badge.textContent = `${count} words`;
+      if (count > 300) {
+        badge.className = "text-xs font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-300";
+        badge.textContent = `${count} words (exceeds 300-word limit)`;
+      } else {
+        badge.className = "text-xs font-mono text-accent2 px-2 py-0.5 rounded border border-hairline bg-paper";
+      }
+    }
+
+    async function renderMermaidDiagram(graphCode) {
+      const container = document.getElementById('mermaidDiagram');
+      container.textContent = '';
+      currentZoom = 1;
+      document.getElementById('mermaidViewport').style.transform = 'scale(1)';
+
+      if (!graphCode || !graphCode.trim()) {
+        const notice = document.createElement('div');
+        notice.className = 'text-xs text-muted p-4 font-mono';
+        notice.textContent = 'No architecture flowchart available for this paper.';
+        container.appendChild(notice);
+        return;
+      }
+
+      try {
+        const id = 'mermaidSvg_' + Math.random().toString(36).substring(7);
+        const { svg } = await mermaid.render(id, graphCode);
+        container.innerHTML = svg;
+      } catch (err) {
+        // Safe fallback without innerHTML
+        container.textContent = '';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'p-4 text-xs font-mono text-muted space-y-2';
+        const errNotice = document.createElement('div');
+        errNotice.className = 'text-rose-600 font-sans';
+        errNotice.textContent = 'Mermaid render notice: Unable to render visual SVG graph. Displaying graph source:';
+        const pre = document.createElement('pre');
+        pre.className = 'bg-paper p-3 rounded border border-hairline overflow-x-auto';
+        pre.textContent = graphCode;
+        wrapper.appendChild(errNotice);
+        wrapper.appendChild(pre);
+        container.appendChild(wrapper);
+      }
+    }
+
+    function renderProjectCards(projects) {
+      const container = document.getElementById('projectsContainer');
+      container.textContent = '';
+
+      projects.forEach((proj, idx) => {
+        const card = document.createElement('div');
+        card.className = "border border-hairline rounded-lg bg-white p-5 flex flex-col justify-between space-y-4";
+
+        const topDiv = document.createElement('div');
+        topDiv.className = "space-y-3";
+
+        // Header index
+        const indexRow = document.createElement('div');
+        indexRow.className = "flex items-center justify-between text-xs";
+        const roleLabel = document.createElement('span');
+        roleLabel.className = "text-accent font-medium font-mono";
+        roleLabel.textContent = `Portfolio Extension`;
+        const numSpan = document.createElement('span');
+        numSpan.className = "text-muted font-mono";
+        numSpan.textContent = `0${idx + 1}`;
+        indexRow.appendChild(roleLabel);
+        indexRow.appendChild(numSpan);
+        topDiv.appendChild(indexRow);
+
+        // Title
+        const titleEl = document.createElement('h4');
+        titleEl.className = "font-serif font-semibold text-base leading-snug";
+        titleEl.textContent = proj.title || 'Extension';
+        topDiv.appendChild(titleEl);
+
+        const details = document.createElement('div');
+        details.className = "space-y-2.5 text-xs";
+
+        // Proposed modification
+        details.appendChild(createSectionBlock('Proposed modification', proj.proposed_modification));
+
+        // Problem addressed
+        details.appendChild(createSectionBlock('Problem addressed', proj.problem_addressed));
+
+        // Expected benefit
+        const benefitBlock = createSectionBlock('Expected benefit (Expected, not verified)', proj.expected_benefit);
+        benefitBlock.querySelector('p').className = 'text-accent2 font-medium leading-relaxed';
+        details.appendChild(benefitBlock);
+
+        // Success metric
+        details.appendChild(createSectionBlock('Success metric', proj.success_metric));
+
+        // Tech stack pills
+        const stackContainer = document.createElement('div');
+        const stackLabel = document.createElement('div');
+        stackLabel.className = "text-muted mb-1";
+        stackLabel.textContent = 'Tech stack';
+        stackContainer.appendChild(stackLabel);
+        const pillsDiv = document.createElement('div');
+        pillsDiv.className = "flex flex-wrap gap-1";
+        (proj.tech_stack || []).forEach(tech => {
+          const pill = document.createElement('span');
+          pill.className = "px-2 py-0.5 rounded text-[10px] font-mono bg-paper text-muted border border-hairline";
+          pill.textContent = tech;
+          pillsDiv.appendChild(pill);
+        });
+        stackContainer.appendChild(pillsDiv);
+        details.appendChild(stackContainer);
+
+        // Implementation plan (Ordered list)
+        const planContainer = document.createElement('div');
+        const planLabel = document.createElement('div');
+        planLabel.className = "text-muted mb-1";
+        planLabel.textContent = 'Implementation plan';
+        planContainer.appendChild(planLabel);
+        const ol = document.createElement('ol');
+        ol.className = "list-decimal list-inside space-y-1 text-ink leading-relaxed pl-1";
+        (proj.implementation_plan || []).forEach(step => {
+          const li = document.createElement('li');
+          li.textContent = step;
+          ol.appendChild(li);
+        });
+        planContainer.appendChild(ol);
+        details.appendChild(planContainer);
+
+        // Evaluation plan
+        details.appendChild(createSectionBlock('Evaluation plan', proj.evaluation_plan));
+
+        topDiv.appendChild(details);
+        card.appendChild(topDiv);
+        container.appendChild(card);
+      });
+    }
+
+    function createSectionBlock(label, content) {
+      const div = document.createElement('div');
+      const lbl = document.createElement('div');
+      lbl.className = "text-muted mb-0.5";
+      lbl.textContent = label;
+      const p = document.createElement('p');
+      p.className = "text-ink leading-relaxed";
+      p.textContent = content || '';
+      div.appendChild(lbl);
+      div.appendChild(p);
+      return div;
+    }
+
+    // Zoom and source toggle handlers
+    function zoomMermaid(factor) {
+      currentZoom = Math.min(Math.max(currentZoom * factor, 0.4), 2.5);
+      document.getElementById('mermaidViewport').style.transform = `scale(${currentZoom})`;
+    }
+    function resetZoom() {
+      currentZoom = 1;
+      document.getElementById('mermaidViewport').style.transform = 'scale(1)';
+    }
+    function toggleMermaidSource() {
+      document.getElementById('mermaidCodeBlock').classList.toggle('hidden');
+    }
+
+    function copyMermaidString() {
+      if (!currentAnalysisData?.flowchart_mermaid) return;
+      copyText(currentAnalysisData.flowchart_mermaid);
+      showToast('Mermaid syntax copied');
+    }
+
+    function downloadSvg() {
+      const svg = document.querySelector('#mermaidDiagram svg');
+      if (!svg) {
+        showToast('No SVG diagram to export');
+        return;
+      }
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'scholarflow_flowchart.svg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Exported flowchart SVG');
+    }
+
+    // Export reports
+    function copyAnalysisPlainText() {
+      if (!currentAnalysisData) return;
+      const text = generateReadableTextReport(currentAnalysisData);
+      copyText(text);
+      showToast('Copied readable analysis to clipboard');
+    }
+
+    function downloadJsonReport() {
+      if (!currentAnalysisData) return;
+      const jsonStr = JSON.stringify(currentAnalysisData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const safeTitle = (currentAnalysisData.paper_title || 'paper').toLowerCase().replace(/[^a-z0-9]/g, '_');
+      a.download = `${safeTitle}_analysis.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Downloaded JSON analysis');
+    }
+
+    function downloadTxtReport() {
+      if (!currentAnalysisData) return;
+      const text = generateReadableTextReport(currentAnalysisData);
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const safeTitle = (currentAnalysisData.paper_title || 'paper').toLowerCase().replace(/[^a-z0-9]/g, '_');
+      a.download = `${safeTitle}_analysis.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Downloaded TXT analysis');
+    }
+
+    function generateReadableTextReport(data) {
+      const meta = data.metadata || {};
+      const c = meta.citations !== null && meta.citations !== undefined ? meta.citations : 'Not verified';
+      const a = meta.authors || 'Not verified';
+      const p = meta.publication || 'Not verified';
+      const y = meta.year || 'Not verified';
+
+      let out = `================================================================================\n`;
+      out += `SCHOLARFLOW RESEARCH PAPER ANALYSIS REPORT\n`;
+      out += `================================================================================\n\n`;
+      out += `Paper Title: ${data.paper_title || 'Untitled'}\n`;
+      out += `Source URL: ${data.source_url || 'Not provided'}\n\n`;
+
+      out += `--------------------------------------------------------------------------------\n`;
+      out += `1. CORE CONCEPT SUMMARY\n`;
+      out += `--------------------------------------------------------------------------------\n`;
+      const s = data.core_summary || {};
+      out += `Problem Statement:\n${s.problem_statement || ''}\n\n`;
+      out += `Primary Methodology:\n${s.methodology || ''}\n\n`;
+      out += `Algorithmic Contributions:\n${s.algorithmic_contributions || ''}\n\n`;
+      out += `Key Findings:\n${s.key_findings || ''}\n\n`;
+      out += `Plain-Language Explanation:\n${s.plain_language_explanation || ''}\n\n`;
+
+      out += `--------------------------------------------------------------------------------\n`;
+      out += `2. SYSTEM ARCHITECTURE [FLOWCHART]\n`;
+      out += `--------------------------------------------------------------------------------\n`;
+      out += `${data.flowchart_mermaid || 'No flowchart available.'}\n\n`;
+      const inf = (data.flowchart_inferred_elements || []).join(', ');
+      out += `Inferred Elements: ${inf || 'None'}\n\n`;
+
+      out += `--------------------------------------------------------------------------------\n`;
+      out += `3. BUILD OPPORTUNITIES (STUDENT PROJECT EXTENSIONS)\n`;
+      out += `--------------------------------------------------------------------------------\n\n`;
+      (data.project_extensions || []).forEach((proj, i) => {
+        out += `Project 0${i + 1}: ${proj.title}\n`;
+        out += `* Proposed Modification: ${proj.proposed_modification}\n`;
+        out += `* Problem Addressed: ${proj.problem_addressed}\n`;
+        out += `* Expected Benefit (Expected, not verified): ${proj.expected_benefit}\n`;
+        out += `* Success Metric: ${proj.success_metric}\n`;
+        out += `* Tech Stack: ${(proj.tech_stack || []).join(', ')}\n`;
+        out += `* Implementation Plan:\n`;
+        (proj.implementation_plan || []).forEach((st, idx) => {
+          out += `  ${idx + 1}. ${st}\n`;
+        });
+        out += `* Evaluation Plan: ${proj.evaluation_plan}\n\n`;
+      });
+
+      out += `--------------------------------------------------------------------------------\n`;
+      out += `4. METADATA OF PAPER\n`;
+      out += `--------------------------------------------------------------------------------\n`;
+      out += `Citations: ${c}\n`;
+      out += `Authors: ${a}\n`;
+      out += `Publication: ${p}\n`;
+      out += `Year: ${y}\n`;
+      out += `Verification Notes: ${meta.verification_notes || 'None'}\n\n`;
+
+      out += `Metadata: Citations: ${c}, Authors: ${a}, Publication: ${p}, Year: ${y}`;
+      return out;
+    }
+
+    // Bundled benchmark data conforming to new schema
+    async function loadBundledSample(key) {
+      if (key === 'transformer') {
+        try {
+          const res = await fetch('/api/sample');
+          if (res.ok) {
+            const data = await res.json();
+            renderAnalysisResult(data, true);
+            document.getElementById('paperInput').value = data.source_url;
+            return;
+          }
+        } catch {
+          // fallback to bundled object if fetch fails
+        }
+      }
+
+      const sample = BUNDLED_BENCHMARKS[key] || BUNDLED_BENCHMARKS.transformer;
+      renderAnalysisResult(sample, true);
+      document.getElementById('paperInput').value = sample.source_url;
+    }
+
+    const BUNDLED_BENCHMARKS = {
+      transformer: {
+        status: "ok",
+        source_url: "https://arxiv.org/abs/1706.03762",
+        error: null,
+        paper_title: "Attention Is All You Need",
+        core_summary: {
+          problem_statement: "Prior sequence transduction models relied heavily on complex recurrent or convolutional neural networks. Recurrent connections forced sequential step-by-step computation, preventing training parallelization on GPUs and hindering the retention of long-range dependencies.",
+          methodology: "The authors propose the Transformer, eschewing recurrence entirely and relying solely on self-attention mechanisms to map dependencies between inputs and targets directly in parallel across all sequence positions.",
+          algorithmic_contributions: "Scaled Dot-Product Attention with root-dimension scaling, Multi-Head Attention to attend across disparate representation subspaces, and sinusoidal positional encodings communicate token order without recurrent recurrence.",
+          key_findings: "The Transformer established state-of-the-art translation scores on WMT 2014 tasks while training in 3.5 days on 8 GPUs, substantially faster than competitive recurrent or convolutional models.",
+          plain_language_explanation: "Rather than reading text one word at a time, the Transformer ingests full sentences simultaneously, computing mathematical relationships between all pairs of words at once."
+        },
+        flowchart_mermaid: `graph TD
+    InTokens["Source Tokens"] --> InpEmb["Input Embedding Layer"]
+    InpEmb --> InpAdd["Add Positional Encoding"]
+    InPE["Positional Encodings"] --> InpAdd
+    InpAdd --> EncMHA["Multi-Head Self-Attention"]
+    EncMHA --> EncNorm1["Add & Layer Normalization"]
+    InpAdd -. "Residual Connection" .-> EncNorm1
+    EncNorm1 --> EncFFN["Position-Wise Feed-Forward Network"]
+    EncFFN --> EncNorm2["Add & Layer Normalization"]
+    EncNorm1 -. "Residual Connection" .-> EncNorm2
+    OutTokens["Target Tokens Shifted Right"] --> OutEmb["Output Embedding Layer"]
+    OutEmb --> OutAdd["Add Positional Encoding"]
+    OutPE["Positional Encodings"] --> OutAdd
+    OutAdd --> DecMaskMHA["Masked Multi-Head Self-Attention"]
+    DecMaskMHA --> DecNorm1["Add & Layer Normalization"]
+    OutAdd -. "Residual Connection" .-> DecNorm1
+    DecNorm1 --> DecCrossMHA["Multi-Head Cross-Attention"]
+    EncNorm2 -->|"Keys & Values"| DecCrossMHA
+    DecCrossMHA --> DecNorm2["Add & Layer Normalization"]
+    DecNorm1 -. "Residual Connection" .-> DecNorm2
+    DecNorm2 --> DecFFN["Position-Wise Feed-Forward Network"]
+    DecFFN --> DecNorm3["Add & Layer Normalization"]
+    DecNorm2 -. "Residual Connection" .-> DecNorm3
+    DecNorm3 --> LinearProj["Linear Projection Layer"]
+    LinearProj --> SoftmaxHead["Softmax"]
+    SoftmaxHead --> OutputProbs["Next-Token Probabilities"]`,
+        flowchart_inferred_elements: [],
+        project_extensions: [
+          {
+            title: "Hybrid State-Space Transformer for Long-Sequence Document Modeling",
+            proposed_modification: "Replace quadratic O(N²) self-attention blocks in lower Transformer layers with selective linear state-space (Mamba) layers.",
+            problem_addressed: "Standard self-attention quadratic complexity imposes prohibitive VRAM bottlenecks on context lengths exceeding 4k tokens.",
+            expected_benefit: "Expected sub-quadratic memory scaling and expected increase in generation throughput on long document contexts.",
+            success_metric: "Targeting reduced peak GPU memory allocation and sustained decoding speed on sequence lengths up to 8,192 tokens with minimal loss in perplexity.",
+            tech_stack: ["PyTorch", "Hugging Face Transformers", "Mamba-SSM", "Weights & Biases"],
+            implementation_plan: [
+              "Profile memory scaling of standard multi-head attention against sequence length.",
+              "Swap intermediate encoder attention layers with causal Mamba selective state-space blocks.",
+              "Fine-tune the hybrid checkpoint on long-context technical summaries and measure memory consumption."
+            ],
+            evaluation_plan: "Evaluate validation perplexity on long-form document datasets alongside profiling peak CUDA memory using torch.cuda.max_memory_allocated."
+          },
+          {
+            title: "Edge Deployment with Post-Training Weight-Activation Quantization",
+            proposed_modification: "Apply activation-aware 4-bit weight quantization (AWQ) and export the encoder-decoder graph to ONNX Runtime.",
+            problem_addressed: "Unquantized 32-bit floating-point weights exceed memory and bandwidth limits on resource-constrained ARM and embedded devices.",
+            expected_benefit: "Expected reduction in model storage footprint and expected latency improvements during CPU-bound inference.",
+            success_metric: "Targeting under 200MB memory footprint and real-time interactive generation latency on ARM64 processors with less than 0.5 BLEU score degradation.",
+            tech_stack: ["ONNX Runtime", "Optimum", "PyTorch", "C++"],
+            implementation_plan: [
+              "Calibrate layer activations over a representative multi-lingual corpus.",
+              "Quantize linear projection and feed-forward layers to 4-bit weights with 8-bit activations.",
+              "Export model graph to ONNX Runtime and benchmark throughput on ARM CPU cores."
+            ],
+            evaluation_plan: "Compare BLEU translation scores and measure execution wall-clock time per generated token on ARM64 hardware."
+          },
+          {
+            title: "Speculative Decoding using a Lightweight Draft Model",
+            proposed_modification: "Pair the base Transformer model with a compact 2-layer autoregressive draft network to propose speculative token sequences verified in parallel by the target model.",
+            problem_addressed: "Autoregressive token-by-token generation is memory-bandwidth bound on GPUs due to repeated weight loading per token.",
+            expected_benefit: "Expected reduction in end-to-end wall-clock generation latency while mathematically preserving exact target model token probability distributions.",
+            success_metric: "Targeting an average acceptance rate of 2-3 tokens per draft proposal with zero degradation in output accuracy compared to greedy sampling.",
+            tech_stack: ["PyTorch", "vLLM", "Hugging Face", "CUDA"],
+            implementation_plan: [
+              "Train a 2-layer draft head on the frozen hidden representations of the primary Transformer.",
+              "Implement speculative verification logic accepting matching prefix tokens.",
+              "Measure wall-clock latency per completed response under varied sequence lengths."
+            ],
+            evaluation_plan: "Measure acceptance length ratio (mean accepted draft tokens per verification step) and total inference speedup compared to standard autoregressive decoding."
+          }
+        ],
+        metadata: {
+          citations: null,
+          authors: "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin",
+          publication: "Advances in Neural Information Processing Systems (NeurIPS 2017)",
+          year: 2017,
+          verification_notes: "Citations set to null; citation counts fluctuate dynamically across bibliographic databases. Metadata verified against NeurIPS 2017 proceedings."
+        },
+        inference_notes: ["Loaded bundled benchmark sample."]
+      },
+      resnet: {
+        status: "ok",
+        source_url: "https://arxiv.org/abs/1512.03385",
+        error: null,
+        paper_title: "Deep Residual Learning for Image Recognition",
+        core_summary: {
+          problem_statement: "Deep convolutional networks suffer from the degradation problem: as network depth increases, accuracy saturates and then degrades rapidly, caused by optimization difficulties and vanishing gradients rather than overfitting.",
+          methodology: "The authors introduce residual learning, modifying layers to fit an underlying residual mapping F(x) = H(x) - x through feedforward identity shortcut connections.",
+          algorithmic_contributions: "Identity skip connections adding zero extra parameters and bottleneck building blocks reducing parameter counts across 50, 101, and 152 layer networks.",
+          key_findings: "Residual networks successfully trained 152 layers on ImageNet—8x deeper than VGG nets—achieving 3.57% top-5 error and winning first place in ILSVRC 2015.",
+          plain_language_explanation: "Instead of forcing each layer to learn an entirely new picture transformation from scratch, ResNet passes the input directly forward, so layers only need to learn what changed."
+        },
+        flowchart_mermaid: `graph TD
+    ImgIn["Input Image 224x224x3"] --> Conv1["Conv 7x7, 64, Stride 2"]
+    Conv1 --> MaxPool["Max Pooling 3x3, Stride 2"]
+    MaxPool --> ConvBlock1["Weight Layer Conv 3x3"]
+    ConvBlock1 --> ConvBlock2["Weight Layer Conv 3x3"]
+    MaxPool -. "Identity Shortcut: x" .-> Add1["Vector Addition: F_x + x"]
+    ConvBlock2 --> Add1
+    Add1 --> ReLU1["ReLU Activation"]
+    ReLU1 --> GlobalAvgPool["Global Average Pooling"]
+    GlobalAvgPool --> FC["Dense Linear 1000"]
+    FC --> Softmax["Softmax Head"]`,
+        flowchart_inferred_elements: [],
+        project_extensions: [
+          {
+            title: "Dynamic Channel Pruning with Taylor Saliency Scoring",
+            proposed_modification: "Apply structured channel pruning to convolutional residual blocks using first-order Taylor expansion gradients.",
+            problem_addressed: "Standard ResNet-50 models have redundant filter parameters causing high inference latency on embedded devices.",
+            expected_benefit: "Expected reduction in floating-point operations (FLOPs) and expected latency improvements on edge accelerators.",
+            success_metric: "Targeting a 30-40% reduction in total FLOPs on Jetson or Raspberry Pi with less than 1% drop in top-1 ImageNet accuracy.",
+            tech_stack: ["PyTorch", "Torch-Pruning", "TensorRT"],
+            implementation_plan: [
+              "Compute first-order Taylor gradient scores for all convolutional filters.",
+              "Prune the bottom 25% lowest-importance channels iteratively.",
+              "Fine-tune the pruned architecture for 5 epochs on ImageNet-1k."
+            ],
+            evaluation_plan: "Measure execution latency per image batch on embedded hardware alongside top-1 validation accuracy."
+          },
+          {
+            title: "Structural Re-parameterization for Mobile Deployment",
+            proposed_modification: "Re-parameterize multi-branch residual blocks to collapse into a single direct 3x3 convolution during inference.",
+            problem_addressed: "Multi-branch residual additions create memory access overhead and fragment memory caches on mobile CPUs.",
+            expected_benefit: "Expected increase in throughput on mobile devices by unifying computation into contiguous memory operations.",
+            success_metric: "Targeting lower memory fragmentation and higher frame rates during mobile camera inference.",
+            tech_stack: ["PyTorch", "ONNX Runtime", "CoreML"],
+            implementation_plan: [
+              "Formulate equivalent linear weights combining 1x1, 3x3, and identity branches.",
+              "Fuse batch-norm into convolution weights post-training.",
+              "Export unified model to CoreML and benchmark frame processing speed."
+            ],
+            evaluation_plan: "Measure average latency per camera frame and memory bandwidth consumption on mobile CPU targets."
+          },
+          {
+            title: "Quantization-Aware Training for Microcontrollers",
+            proposed_modification: "Implement 8-bit integer quantization-aware training (QAT) across all residual stages.",
+            problem_addressed: "FP32 weights exceed onboard flash and RAM limits on microcontrollers with less than 512KB memory.",
+            expected_benefit: "Expected 4x reduction in weight storage footprint allowing microcontroller execution.",
+            success_metric: "Achieve execution within 256KB SRAM budget with minimal degradation in classification performance.",
+            tech_stack: ["PyTorch", "Neural Compressor", "CMSIS-NN"],
+            implementation_plan: [
+              "Insert fake-quantization nodes into residual blocks during training.",
+              "Calibrate activation ranges using representative training batches.",
+              "Compile INT8 binary for ARM Cortex-M."
+            ],
+            evaluation_plan: "Measure accuracy on ImageNet validation split alongside memory high-water mark on hardware simulator."
+          }
+        ],
+        metadata: {
+          citations: null,
+          authors: "Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun",
+          publication: "IEEE Conference on Computer Vision and Pattern Recognition (CVPR 2016)",
+          year: 2016,
+          verification_notes: "Citations set to null; citation counts fluctuate dynamically. Metadata verified against CVPR 2016 proceedings."
+        },
+        inference_notes: ["Loaded bundled ResNet benchmark sample."]
+      },
+      lora: {
+        status: "ok",
+        source_url: "https://arxiv.org/abs/2106.09685",
+        error: null,
+        paper_title: "LoRA: Low-Rank Adaptation of Large Language Models",
+        core_summary: {
+          problem_statement: "Full fine-tuning of multi-billion parameter foundation models is prohibitively expensive, requiring saving full checkpoint weights (>100GB) per downstream task and causing massive GPU memory overhead during backpropagation.",
+          methodology: "LoRA freezes pre-trained model weights W0 and injects trainable rank decomposition matrices A and B into Transformer attention projections, optimizing delta W = B x A.",
+          algorithmic_contributions: "Low-rank factorized parameter updates where rank r << min(d, k), with zero additional inference latency because weights can be pre-merged.",
+          key_findings: "LoRA achieves comparable or superior performance to full fine-tuning on GPT-3 175B while reducing trainable parameters by 10,000x and GPU memory consumption by 3x.",
+          plain_language_explanation: "Instead of adjusting every single knob in a giant AI brain, LoRA keeps the original brain frozen and attaches a tiny pair of specialized modifier matrices to adapt it for a new task."
+        },
+        flowchart_mermaid: `graph TD
+    X["Input Hidden State x"] --> FrozenW["Frozen Pre-Trained Weight W0"]
+    X --> MatrixA["Matrix A: Down-Projection d to r"]
+    MatrixA --> MatrixB["Matrix B: Up-Projection r to d"]
+    MatrixB --> ScaleFactor["Scaling Factor: alpha / r"]
+    FrozenW --> AddNode["Element-wise Sum: h = W0 x + delta W x"]
+    ScaleFactor --> AddNode
+    AddNode --> FinalHidden["Updated Output Hidden State h"]`,
+        flowchart_inferred_elements: [],
+        project_extensions: [
+          {
+            title: "Dynamic Rank-Adaptive LoRA Allocation",
+            proposed_modification: "Dynamically assign adapter ranks across layers during fine-tuning based on singular value importance scores.",
+            problem_addressed: "Uniform static rank allocation under-allocates capacity to critical attention layers while wasting parameters on insensitive ones.",
+            expected_benefit: "Expected reduction in total trainable parameters while preserving downstream task accuracy.",
+            success_metric: "Targeting 20-30% fewer trainable parameters than standard LoRA at equivalent benchmark accuracy.",
+            tech_stack: ["PyTorch", "Hugging Face PEFT", "Datasets"],
+            implementation_plan: [
+              "Track gradient singular values during the first 100 fine-tuning steps.",
+              "Dynamically prune low-importance rank components and expand high-importance ranks.",
+              "Evaluate on standard NLP classification benchmarks."
+            ],
+            evaluation_plan: "Compare GLUE benchmark scores and parameter efficiency against uniform rank-8 LoRA baseline."
+          },
+          {
+            title: "Multi-Tenant Dynamic LoRA Hot-Swapping Server",
+            proposed_modification: "Build a high-concurrency inference server that swaps task-specific LoRA adapters on top of a single shared frozen LLM backbone.",
+            problem_addressed: "Hosting separate fine-tuned models per tenant multiplies GPU memory requirements linearly.",
+            expected_benefit: "Expected reduction in GPU memory overhead when serving heterogeneous multi-tenant workloads.",
+            success_metric: "Targeting sub-15ms adapter switching time across multiple concurrent client tasks on a single GPU.",
+            tech_stack: ["vLLM", "FastAPI", "CUDA Streams"],
+            implementation_plan: [
+              "Maintain shared base weights in GPU VRAM and stream lightweight adapter weights.",
+              "Implement request batching grouped by active adapter IDs.",
+              "Benchmark end-to-end throughput under multi-task request loads."
+            ],
+            evaluation_plan: "Measure p95 request latency and throughput under varied task distributions on a single 24GB GPU."
+          },
+          {
+            title: "Quantized 4-bit LoRA (QLoRA) Fine-Tuning Pipeline",
+            proposed_modification: "Pair LoRA with 4-bit NormalFloat quantization and double quantization to fine-tune 7B models on consumer hardware.",
+            problem_addressed: "16-bit foundation models exceed VRAM capacities on consumer 8GB-16GB GPUs.",
+            expected_benefit: "Expected reduction in VRAM footprint enabling student training on consumer graphics cards.",
+            success_metric: "Targeting 7B model fine-tuning within 10GB VRAM with minimal perplexity degradation.",
+            tech_stack: ["bitsandbytes", "PEFT", "TRL"],
+            implementation_plan: [
+              "Quantize base model weights to NF4 precision.",
+              "Attach LoRA adapter weights in FP16 precision.",
+              "Fine-tune on instruction-following datasets and monitor VRAM usage."
+            ],
+            evaluation_plan: "Record peak GPU memory using nvidia-smi and evaluate downstream generation quality."
+          }
+        ],
+        metadata: {
+          citations: null,
+          authors: "Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, Weizhu Chen",
+          publication: "International Conference on Learning Representations (ICLR 2022)",
+          year: 2022,
+          verification_notes: "Citations set to null; citation counts fluctuate dynamically. Metadata verified against ICLR 2022 proceedings."
+        },
+        inference_notes: ["Loaded bundled LoRA benchmark sample."]
+      },
+      mamba: {
+        status: "ok",
+        source_url: "https://arxiv.org/abs/2312.00752",
+        error: null,
+        paper_title: "Mamba: Linear-Time Sequence Modeling with Selective State Spaces",
+        core_summary: {
+          problem_statement: "Transformers suffer from quadratic computational and memory complexity O(N²) in sequence length, making long-context processing slow and memory-intensive.",
+          methodology: "Mamba introduces selective state space models (S6) by making state-space parameters time-varying functions of the input, combined with a hardware-aware parallel scan algorithm on SRAM.",
+          algorithmic_contributions: "Input-dependent selection mechanism allowing the model to filter irrelevant information, and an efficient parallel associative scan that computes states in O(N) time directly on SRAM.",
+          key_findings: "Mamba matches or outperforms Transformers across text, audio, and genomics benchmarks while achieving 5x higher inference throughput and linear scaling with sequence length.",
+          plain_language_explanation: "Instead of comparing all words with all other words quadratically, Mamba maintains a selective ongoing summary memory that updates dynamically as each new word arrives."
+        },
+        flowchart_mermaid: `graph TD
+    X["Input Sequence x"] --> UpProj1["Linear Up-Projection Layer 1"]
+    X --> UpProj2["Linear Up-Projection Layer 2 - Gating"]
+    UpProj1 --> Conv1D["1D Causal Convolution"]
+    Conv1D --> SiLU1["SiLU Activation"]
+    SiLU1 --> DynamicDelta["Input-Dependent Parameter delta_t"]
+    DynamicDelta --> Discretize["Discretization: A_bar, B_bar"]
+    Discretize --> HardwareScan["Fused Hardware-Aware Parallel Scan"]
+    UpProj2 --> SiLU2["SiLU Activation Branch"]
+    HardwareScan --> Multiply["Element-Wise Multiplication Gate"]
+    SiLU2 --> Multiply
+    Multiply --> DownProj["Linear Down-Projection Layer"]
+    DownProj --> OutHidden["Output Hidden State y"]`,
+        flowchart_inferred_elements: [],
+        project_extensions: [
+          {
+            title: "Streaming Audio Modeling with 1D Mamba Blocks",
+            proposed_modification: "Replace dilated convolutions in WaveNet architectures with causal Mamba selective state-space blocks for raw waveform generation.",
+            problem_addressed: "Dilated convolution receptive fields require deep layer stacks that introduce inference latency in real-time audio streams.",
+            expected_benefit: "Expected throughput improvements and reduced memory footprint during continuous streaming audio synthesis.",
+            success_metric: "Targeting sustained real-time audio generation on edge CPU architectures with high perceptual audio quality.",
+            tech_stack: ["PyTorch", "Mamba-SSM", "Torchaudio"],
+            implementation_plan: [
+              "Implement 1D causal Mamba blocks for 44.1kHz raw waveform processing.",
+              "Train on open speech corpora.",
+              "Profile latency on edge CPU targets."
+            ],
+            evaluation_plan: "Measure real-time factor (RTF) and Mean Opinion Score (MOS) against convolution-based baseline."
+          },
+          {
+            title: "Bidirectional Vision Mamba for Medical Segmentation",
+            proposed_modification: "Adapt 2D bidirectional Mamba blocks for gigapixel whole-slide medical image segmentation without aggressive patch downsampling.",
+            problem_addressed: "Quadratic vision transformers exceed GPU memory on large pathological slide images.",
+            expected_benefit: "Expected linear memory scaling allowing processing of high-resolution slides in fewer patches.",
+            success_metric: "Targeting whole-slide segmentation with reduced peak VRAM consumption compared to Swin-Transformer.",
+            tech_stack: ["PyTorch", "MONAI", "Vision-Mamba"],
+            implementation_plan: [
+              "Formulate 2D spatial scanning patterns for image patches.",
+              "Integrate bidirectional state-space layers into an encoder-decoder network.",
+              "Evaluate boundary segmentation accuracy on open pathology datasets."
+            ],
+            evaluation_plan: "Measure Dice similarity coefficients and CUDA memory consumption against Swin-UNet."
+          },
+          {
+            title: "Hardware Memory Access Simulator for State-Space Kernels",
+            proposed_modification: "Build a cycle-accurate simulator modeling SRAM dataflow and memory reuse for Mamba's parallel scan on custom accelerators.",
+            problem_addressed: "Assessing custom hardware accelerator efficiency for SSMs requires detailed modeling of memory bandwidth and SRAM reuse.",
+            expected_benefit: "Expected architectural insights into optimal on-chip buffer sizing for dedicated state-space processing units.",
+            success_metric: "Demonstrate high memory reuse modeling fidelity against empirical GPU profiling metrics.",
+            tech_stack: ["C++20", "Python", "Verilator"],
+            implementation_plan: [
+              "Model SRAM read/write transactions for associative prefix scans.",
+              "Simulate memory bandwidth consumption across varying sequence lengths.",
+              "Validate simulation against hardware profiling logs."
+            ],
+            evaluation_plan: "Compare simulated memory cycle counts against hardware profiler data from physical GPU executions."
+          }
+        ],
+        metadata: {
+          citations: null,
+          authors: "Albert Gu, Tri Dao",
+          publication: "arXiv preprint",
+          year: 2023,
+          verification_notes: "Citations set to null; citation counts fluctuate dynamically. Metadata verified against arXiv preprint 2312.00752."
+        },
+        inference_notes: ["Loaded bundled Mamba benchmark sample."]
+      }
+    };
+
+    function copyText(str) {
+      if (!str) return;
+      navigator.clipboard.writeText(str);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

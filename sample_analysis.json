@@ -1,0 +1,86 @@
+{
+  "status": "ok",
+  "source_url": "https://arxiv.org/abs/1706.03762",
+  "error": null,
+  "paper_title": "Attention Is All You Need",
+  "core_summary": {
+    "problem_statement": "Prior state-of-the-art sequence transduction models relied heavily on complex recurrent or convolutional neural networks connected via an attention mechanism. The sequential nature of recurrence precluded computational parallelization during training on GPUs and hindered learning long-range contextual dependencies due to vanishing gradients across distant positions.",
+    "methodology": "The authors propose the Transformer, a novel model architecture eschewing recurrence and entirely relying on an attention mechanism to draw global dependencies between input and output tokens. By mapping sequences in parallel, it drastically reduces training time while allowing direct connections across all sequence positions.",
+    "algorithmic_contributions": "Key contributions include Scaled Dot-Product Attention with variance-stabilizing square-root scaling, Multi-Head Attention allowing the model to jointly attend to multiple representation subspaces, and sinusoidal positional encodings to inject sequence order without recurrence.",
+    "key_findings": "On the WMT 2014 English-to-German and English-to-French translation tasks, the Transformer established new state-of-the-art BLEU scores while training significantly faster (in 3.5 days on 8 GPUs) than competitive recurrent or convolutional ensembles.",
+    "plain_language_explanation": "Instead of reading text word-by-word like a human reader, the Transformer looks at an entire sentence at once, calculating how much every word relates to every other word simultaneously, making training dramatically faster and capturing context across full sentences."
+  },
+  "flowchart_mermaid": "graph TD\n    InTokens[\"Source Tokens\"] --> InpEmb[\"Input Embedding Layer\"]\n    InpEmb --> InpAdd[\"Add Positional Encoding\"]\n    InPE[\"Positional Encodings\"] --> InpAdd\n    InpAdd --> EncMHA[\"Multi-Head Self-Attention\"]\n    EncMHA --> EncNorm1[\"Add & Layer Normalization\"]\n    InpAdd -. \"Residual Connection\" .-> EncNorm1\n    EncNorm1 --> EncFFN[\"Position-Wise Feed-Forward Network\"]\n    EncFFN --> EncNorm2[\"Add & Layer Normalization\"]\n    EncNorm1 -. \"Residual Connection\" .-> EncNorm2\n    OutTokens[\"Target Tokens Shifted Right\"] --> OutEmb[\"Output Embedding Layer\"]\n    OutEmb --> OutAdd[\"Add Positional Encoding\"]\n    OutPE[\"Positional Encodings\"] --> OutAdd\n    OutAdd --> DecMaskMHA[\"Masked Multi-Head Self-Attention\"]\n    DecMaskMHA --> DecNorm1[\"Add & Layer Normalization\"]\n    OutAdd -. \"Residual Connection\" .-> DecNorm1\n    DecNorm1 --> DecCrossMHA[\"Multi-Head Cross-Attention\"]\n    EncNorm2 -->|\"Keys & Values\"| DecCrossMHA\n    DecCrossMHA --> DecNorm2[\"Add & Layer Normalization\"]\n    DecNorm1 -. \"Residual Connection\" .-> DecNorm2\n    DecNorm2 --> DecFFN[\"Position-Wise Feed-Forward Network\"]\n    DecFFN --> DecNorm3[\"Add & Layer Normalization\"]\n    DecNorm2 -. \"Residual Connection\" .-> DecNorm3\n    DecNorm3 --> LinearProj[\"Linear Projection Layer\"]\n    LinearProj --> SoftmaxHead[\"Softmax\"]\n    SoftmaxHead --> OutputProbs[\"Next-Token Probabilities\"]",
+  "flowchart_inferred_elements": [],
+  "project_extensions": [
+    {
+      "title": "Hybrid State-Space Transformer for Long-Sequence Document Modeling",
+      "proposed_modification": "Replace quadratic O(N²) self-attention blocks in lower Transformer layers with selective linear state-space (Mamba) layers.",
+      "problem_addressed": "Standard self-attention quadratic complexity imposes prohibitive VRAM bottlenecks on context lengths exceeding 4k tokens.",
+      "expected_benefit": "Expected sub-quadratic memory scaling and expected increase in generation throughput on long document contexts.",
+      "success_metric": "Targeting reduced peak GPU memory allocation and sustained decoding speed on sequence lengths up to 8,192 tokens with minimal loss in perplexity.",
+      "tech_stack": [
+        "PyTorch",
+        "Hugging Face Transformers",
+        "Mamba-SSM",
+        "Weights & Biases"
+      ],
+      "implementation_plan": [
+        "Profile memory scaling of standard multi-head attention against sequence length.",
+        "Swap intermediate encoder attention layers with causal Mamba selective state-space blocks.",
+        "Fine-tune the hybrid checkpoint on long-context technical summaries and measure memory consumption."
+      ],
+      "evaluation_plan": "Evaluate validation perplexity on long-form document datasets alongside profiling peak CUDA memory using torch.cuda.max_memory_allocated."
+    },
+    {
+      "title": "Edge Deployment with Post-Training Weight-Activation Quantization",
+      "proposed_modification": "Apply activation-aware 4-bit weight quantization (AWQ) and export the encoder-decoder graph to ONNX Runtime.",
+      "problem_addressed": "Unquantized 32-bit floating-point weights exceed memory and bandwidth limits on resource-constrained ARM and embedded devices.",
+      "expected_benefit": "Expected reduction in model storage footprint and expected latency improvements during CPU-bound inference.",
+      "success_metric": "Targeting under 200MB memory footprint and real-time interactive generation latency on ARM64 processors with less than 0.5 BLEU score degradation.",
+      "tech_stack": [
+        "ONNX Runtime",
+        "Optimum",
+        "PyTorch",
+        "C++"
+      ],
+      "implementation_plan": [
+        "Calibrate layer activations over a representative multi-lingual corpus.",
+        "Quantize linear projection and feed-forward layers to 4-bit weights with 8-bit activations.",
+        "Export model graph to ONNX Runtime and benchmark throughput on ARM CPU cores."
+      ],
+      "evaluation_plan": "Compare BLEU translation scores and measure execution wall-clock time per generated token on ARM64 hardware."
+    },
+    {
+      "title": "Speculative Decoding using a Lightweight Draft Model",
+      "proposed_modification": "Pair the base Transformer model with a compact 2-layer autoregressive draft network to propose speculative token sequences verified in parallel by the target model.",
+      "problem_addressed": "Autoregressive token-by-token generation is memory-bandwidth bound on GPUs due to repeated weight loading per token.",
+      "expected_benefit": "Expected reduction in end-to-end wall-clock generation latency while mathematically preserving exact target model token probability distributions.",
+      "success_metric": "Targeting an average acceptance rate of 2-3 tokens per draft proposal with zero degradation in output accuracy compared to greedy sampling.",
+      "tech_stack": [
+        "PyTorch",
+        "vLLM",
+        "Hugging Face",
+        "CUDA"
+      ],
+      "implementation_plan": [
+        "Train a 2-layer draft head on the frozen hidden representations of the primary Transformer.",
+        "Implement speculative verification logic accepting matching prefix tokens.",
+        "Measure wall-clock latency per completed response under varied sequence lengths."
+      ],
+      "evaluation_plan": "Measure acceptance length ratio (mean accepted draft tokens per verification step) and total inference speedup compared to standard autoregressive decoding."
+    }
+  ],
+  "metadata": {
+    "citations": null,
+    "authors": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin",
+    "publication": "Advances in Neural Information Processing Systems (NeurIPS 2017)",
+    "year": 2017,
+    "verification_notes": "Citations set to null; citation counts fluctuate dynamically across bibliographic databases. Metadata verified against NeurIPS 2017 proceedings."
+  },
+  "inference_notes": [
+    "Bundled benchmark sample loaded from static reference asset.",
+    "Core concept summary word count is approximately 195 words, comfortably compliant with the 300-word limit.",
+    "Flowchart strictly maps the canonical Transformer encoder-decoder architecture."
+  ]
+}

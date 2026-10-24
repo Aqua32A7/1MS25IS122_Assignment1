@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ScholarFlowAnalysisResult",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["ok", "partial", "unavailable"]
+    },
+    "source_url": {
+      "type": ["string", "null"]
+    },
+    "error": {
+      "type": ["object", "null"],
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" }
+      },
+      "required": ["code", "message"],
+      "additionalProperties": false
+    },
+    "paper_title": {
+      "type": ["string", "null"]
+    },
+    "core_summary": {
+      "type": ["object", "null"],
+      "properties": {
+        "problem_statement": { "type": "string" },
+        "methodology": { "type": "string" },
+        "algorithmic_contributions": { "type": "string" },
+        "key_findings": { "type": "string" },
+        "plain_language_explanation": { "type": "string" }
+      },
+      "required": [
+        "problem_statement",
+        "methodology",
+        "algorithmic_contributions",
+        "key_findings",
+        "plain_language_explanation"
+      ],
+      "additionalProperties": false
+    },
+    "flowchart_mermaid": {
+      "type": ["string", "null"]
+    },
+    "flowchart_inferred_elements": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "project_extensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "proposed_modification": { "type": "string" },
+          "problem_addressed": { "type": "string" },
+          "expected_benefit": { "type": "string" },
+          "success_metric": { "type": "string" },
+          "tech_stack": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "implementation_plan": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "evaluation_plan": { "type": "string" }
+        },
+        "required": [
+          "title",
+          "proposed_modification",
+          "problem_addressed",
+          "expected_benefit",
+          "success_metric",
+          "tech_stack",
+          "implementation_plan",
+          "evaluation_plan"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "metadata": {
+      "type": ["object", "null"],
+      "properties": {
+        "citations": { "type": ["integer", "null"] },
+        "authors": { "type": ["string", "null"] },
+        "publication": { "type": ["string", "null"] },
+        "year": { "type": ["integer", "null"] },
+        "verification_notes": { "type": "string" }
+      },
+      "required": ["citations", "authors", "publication", "year", "verification_notes"],
+      "additionalProperties": false
+    },
+    "inference_notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": [
+    "status",
+    "source_url",
+    "error",
+    "paper_title",
+    "core_summary",
+    "flowchart_mermaid",
+    "flowchart_inferred_elements",
+    "project_extensions",
+    "metadata",
+    "inference_notes"
+  ],
+  "additionalProperties": false
+}

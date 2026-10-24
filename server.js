@@ -187,6 +187,7 @@ app.post('/api/analyze', async (req, res) => {
     }
 
     resultText = response.text;
+    let activeResponse = response;
 
     try {
       parsedResult = extractJson(resultText);
@@ -212,12 +213,40 @@ app.post('/api/analyze', async (req, res) => {
         contents: retryContents,
         config: usedConfig
       });
+      activeResponse = retryResponse;
 
       resultText = retryResponse.text;
       parsedResult = extractJson(resultText);
       const isRetryValid = validateSchema(parsedResult);
       if (!isRetryValid) {
         throw new Error('Retry response failed schema validation: ' + ajv.errorsText(validateSchema.errors));
+      }
+    }
+
+    // Post-processing check for metadata honesty
+    if (parsedResult && parsedResult.metadata) {
+      const candidate = (activeResponse?.candidates && activeResponse.candidates[0]) || {};
+      const groundingMeta = candidate.groundingMetadata || activeResponse?.groundingMetadata;
+      const chunks = (groundingMeta && Array.isArray(groundingMeta.groundingChunks)) ? groundingMeta.groundingChunks : [];
+      const webChunks = chunks.filter(c => c && (c.web?.uri || c.web?.title));
+      const queries = (groundingMeta && Array.isArray(groundingMeta.webSearchQueries)) ? groundingMeta.webSearchQueries : [];
+      const hasRetrievedWebSources = (webChunks.length > 0) || (queries.length > 0);
+
+      const verificationNotes = parsedResult.metadata.verification_notes || '';
+      const namedSourcesPattern = /(Semantic Scholar|Google Scholar|OpenAlex|Crossref|publisher)/i;
+      const mentionsNamedSource = namedSourcesPattern.test(verificationNotes);
+
+      // Check citations
+      if (parsedResult.metadata.citations !== null && parsedResult.metadata.citations !== undefined) {
+        if (!hasRetrievedWebSources || !mentionsNamedSource) {
+          parsedResult.metadata.citations = null;
+          parsedResult.metadata.verification_notes = ((parsedResult.metadata.verification_notes || '') + " Citation count removed: no retrieved source supported it.").trim();
+        }
+      }
+
+      // Check authors
+      if (!hasRetrievedWebSources) {
+        parsedResult.metadata.verification_notes = ((parsedResult.metadata.verification_notes || '') + " Author list not confirmed by a retrieved source.").trim();
       }
     }
 

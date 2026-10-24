@@ -56,7 +56,7 @@
       "proposed_modification": "Pair the base Transformer model with a compact 2-layer autoregressive draft network to propose speculative token sequences verified in parallel by the target model.",
       "problem_addressed": "Autoregressive token-by-token generation is memory-bandwidth bound on GPUs due to repeated weight loading per token.",
       "expected_benefit": "Expected reduction in end-to-end wall-clock generation latency while mathematically preserving exact target model token probability distributions.",
-      "success_metric": "Targeting an average acceptance rate of 2-3 tokens per draft proposal with zero degradation in output accuracy compared to greedy sampling.",
+      "success_metric": "Targeting an average acceptance rate of 2-3 tokens per draft proposal with aim of preserving output accuracy compared to greedy sampling.",
       "tech_stack": [
         "PyTorch",
         "vLLM",
@@ -76,7 +76,7 @@
     "authors": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin",
     "publication": "Advances in Neural Information Processing Systems (NeurIPS 2017)",
     "year": 2017,
-    "verification_notes": "Citations set to null; citation counts fluctuate dynamically across bibliographic databases. Metadata verified against NeurIPS 2017 proceedings."
+    "verification_notes": "ILLUSTRATIVE BENCHMARK SAMPLE: Citations set to null because no live search source (such as Semantic Scholar, Google Scholar, OpenAlex, or Crossref) was retrieved during static sample generation. Publication venue and authors supported by NeurIPS publisher proceedings."
   },
   "inference_notes": [
     "Bundled benchmark sample loaded from static reference asset.",

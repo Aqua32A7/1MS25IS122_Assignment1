@@ -87,7 +87,7 @@ Project 03: Speculative Decoding using a Lightweight Draft Model
 * Proposed Modification: Pair the base Transformer model with a compact 2-layer autoregressive draft network to propose speculative token sequences verified in parallel by the target model.
 * Problem Addressed: Autoregressive token-by-token generation is memory-bandwidth bound on GPUs due to repeated weight loading per token.
 * Expected Benefit (Expected, not verified): Expected reduction in end-to-end wall-clock generation latency while mathematically preserving exact target model token probability distributions.
-* Success Metric: Targeting an average acceptance rate of 2-3 tokens per draft proposal with zero degradation in output accuracy compared to greedy sampling.
+* Success Metric: Targeting an average acceptance rate of 2-3 tokens per draft proposal with aim of preserving output accuracy compared to greedy sampling.
 * Tech Stack: PyTorch, vLLM, Hugging Face, CUDA
 * Implementation Plan:
   1. Train a 2-layer draft head on the frozen hidden representations of the primary Transformer.
@@ -102,6 +102,6 @@ Citations: Not verified
 Authors: Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin
 Publication: Advances in Neural Information Processing Systems (NeurIPS 2017)
 Year: 2017
-Verification Notes: Citations set to null; citation counts fluctuate dynamically across bibliographic databases. Metadata verified against NeurIPS 2017 proceedings.
+Verification Notes: ILLUSTRATIVE BENCHMARK SAMPLE: Citations set to null because no live search source (such as Semantic Scholar, Google Scholar, OpenAlex, or Crossref) was retrieved during static sample generation. Publication venue and authors supported by NeurIPS publisher proceedings.
 
 Metadata: Citations: Not verified, Authors: Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin, Publication: Advances in Neural Information Processing Systems (NeurIPS 2017), Year: 2017

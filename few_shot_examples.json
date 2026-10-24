@@ -67,7 +67,7 @@
         "authors": "Dr. Alex Vance, Dr. Elena Rostova",
         "publication": "Synthetic Conference on Machine Learning (SCML 2024)",
         "year": 2024,
-        "verification_notes": "SYNTHETIC EXAMPLE: Citations set to null as metrics fluctuate and paper is synthetic. Metadata verified against fictional SCML 2024 proceedings."
+        "verification_notes": "SYNTHETIC EXAMPLE (illustrative only): Citations set to null because no retrieved search source (Semantic Scholar, Google Scholar, OpenAlex, Crossref, or publisher) was queried. Authors and publication venue are illustrative synthetic fixtures."
       },
       "inference_notes": [
         "Synthetic paper example processed successfully.",
